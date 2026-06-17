@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squid Game - Main Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS Reset & Variables --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+            user-select: none;
+        }
+
+        :root {
+            --neon-pink: #ea0076;
+            --neon-glow: 0 0 10px rgba(234, 0, 118, 0.8), 0 0 20px rgba(234, 0, 118, 0.5);
+            --bg-dark: #050505;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            overflow: hidden; /* Prevent scrolling */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* --- Background System --- */
+        #background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background-color: var(--bg-dark);
+        }
+
+        .bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .bg-layer.active {
+            opacity: 0.6; /* Darkened slightly so text is readable */
+        }
+
+        @keyframes slowZoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Vignette overlay for cinematic effect */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.8) 100%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- UI Layout --- */
+        #ui-layer {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            padding: 4vw 6vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            margin-bottom: 4vh;
+            transition: all 0.5s ease;
+        }
+
+        .logo-text {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .logo-text span {
+            display: block;
+        }
+
+        .menu-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--neon-pink);
+            text-shadow: var(--neon-glow);
+            letter-spacing: 3px;
+            display: none; /* Hidden by default, shown on game modes screen */
+        }
+
+        /* --- Screens --- */
+        .screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* --- Menu Items --- */
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-item {
+            font-size: 2rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            position: relative;
+            padding-left: 20px;
+            transition: all 0.2s ease;
+            width: max-content;
+        }
+
+        /* The pink indicator block */
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 0;
+            background-color: var(--neon-pink);
+            box-shadow: var(--neon-glow);
+            transition: height 0.2s ease;
+        }
+
+        .menu-item:hover, .menu-item.selected {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .menu-item:hover::before, .menu-item.selected::before {
+            height: 100%;
+        }
+
+        /* Smaller items for Game Modes menu */
+        #game-modes-menu .menu-item {
+            font-size: 1.5rem;
+            gap: 10px;
+        }
+
+        /* --- Description Box --- */
+        #description-box {
+            margin-top: auto;
+            width: 60%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 4px solid var(--neon-pink);
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #description-box.visible {
+            opacity: 1;
+        }
+
+        #description-text {
+            font-family: 'Arial', sans-serif; /* Cleaner font for reading */
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #dddddd;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="background-container">
+        <video class="bg-layer active" id="bgvideo" autoplay muted loop playsinline>
+            <source src="assets/intro.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="vignette"></div>
+
+    <div id="ui-layer">
+        
+        <header id="main-header">
+            <h1 class="logo-text" id="main-logo">
+                <span>SQUID</span>
+                <span>GAME</span>
+            </h1>
+            <h1 class="menu-title" id="modes-title">GAME MODES</h1>
+        </header>
+
+        <div id="screen-main" class="screen active">
+            <ul class="menu-list">
+                <li class="menu-item">CONTINUE</li>
+                <li class="menu-item" id="btn-new-game">NEW GAME</li>
+                <li class="menu-item">BANK BALANCE</li>
+                <li class="menu-item">SETTINGS</li>
+                <li class="menu-item">QUIT</li>
+            </ul>
+        </div>
+
+        <div id="screen-modes" class="screen">
+            <ul class="menu-list" id="game-modes-list">
+                </ul>
+
+            <div id="description-box">
+                <p id="description-text">Select a game mode to view its details.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Data Structure for Games ---
+        const gamesData = [
+            {
+                id: "red-light",
+                name: "RED LIGHT, GREEN LIGHT",
+                desc: "Players must cross the finish line within five minutes, moving only on 'Green Light'. When the giant doll turns for 'Red Light', players must freeze completely, as its motion sensors trigger snipers to instantly eliminate anyone who moves.",
+                bgvideo: "assets/redlight-greenlight.mp4"
+            },
+            {
+                id: "six-legs",
+                name: "SIX LEGS",
+                desc: "Teams of five with tied ankles must coordinate their six 'legs' to finish five mini-games within five minutes. Each player completes one station before the group can advance, and failing to finish means the entire team is executed.",
+                bgvideo: "assets/six-legs.mp4"
+            },
+            {
+                id: "mingle",
+                name: "MINGLE",
+                desc: "Players stand on a spinning carousel until a number is announced, then have 30 seconds to form a group of that exact size inside a room. Anyone unable to match the number or left outside is instantly executed.",
+                bgvideo: "assets/mingle.mp4"
+            },
+            {
+                id: "hide-seek",
+                name: "HIDE N' SEEK",
+                desc: "Inside a giant maze, players split into Blue Hiders and armed Red Seekers for 30 minutes. Hiders must remain hidden or find keys to unlock the exit, while Seekers must hunt down and kill a Hider to survive. Anyone who fails their role's objective is instantly executed.",
+                bgvideo: "assets/hideNseek.mp4"
+            },
+            {
+                id: "jump-rope",
+                name: "JUMP ROPE",
+                desc: "Teams must successfully jump over a swinging rope a specified number of times without tripping. Stamina and perfect synchronization are required. Tripping results in immediate elimination.",
+                bgvideo: "assets/jump-rope.mp4"
+            },
+            {
+                id: "dalgona",
+                name: "DALGONA",
+                desc: "Players are given a circular tin containing a honeycomb candy with a stamped shape. They must carve out the shape perfectly using a needle within ten minutes. Breaking the shape results in instant elimination.",
+                bgvideo: "assets/dalgona.mp4"
+            },
+            {
+                id: "glass-bridge",
+                name: "GLASS BRIDGE",
+                desc: "Players must cross a suspended bridge featuring stepping stones made of either tempered or regular glass. Tempered glass holds a player's weight, while regular glass shatters, dropping the player to their elimination.",
+                bgvideo: "assets/glass-bridge.mp4"
+            },
+            {
+                id: "marbles",
+                name: "MARBLES",
+                desc: "Players pair up and are given 10 marbles each. They have 30 minutes to play any game of their choosing to win all 10 of their partner's marbles. The player without marbles is eliminated.",
+                bgvideo: "assets/marbles.mp4"
+            }
+        ];
+
+        // --- DOM Elements ---
+        const btnNewGame = document.getElementById('btn-new-game');
+        const screenMain = document.getElementById('screen-main');
+        const screenModes = document.getElementById('screen-modes');
+        const mainLogo = document.getElementById('main-logo');
+        const modesTitle = document.getElementById('modes-title');
+        const gameModesList = document.getElementById('game-modes-list');
+        const bgContainer = document.getElementById('background-container');
+        const descBox = document.getElementById('description-box');
+        const descText = document.getElementById('description-text');
+
+        // --- Initialization ---
+        function initGameModes() {
+            gamesData.forEach((game, index) => {
+                // 1. Create the Menu Item
+                const li = document.createElement('li');
+                li.className = 'menu-item';
+                li.innerText = game.name;
+                
+                // 2. Create the Background Element for this game
+                const bgVideo = document.createElement('video');
+                bgVideo.className = 'bg-layer';
+                bgVideo.id = `bgvideo-${game.id}`;
+                bgVideo.autoplay = true;
+                bgVideo.muted = true;
+                bgVideo.loop = true;
+                bgVideo.playsInline = true;
+                
+                const source = document.createElement('source');
+                source.src = game.bgvideo;
+                source.type = 'video/mp4';
+                bgVideo.appendChild(source);
+                bgContainer.appendChild(bgVideo);
+
+                // 3. Hover Events
+                li.addEventListener('mouseenter', () => {
+                    // Update Text
+                    descText.innerText = game.desc;
+                    descBox.classList.add('visible');
+
+                    // Manage Backgrounds
+                    document.querySelectorAll('.bg-layer').forEach(bg => bg.classList.remove('active'));
+                    document.getElementById(`bgvideo-${game.id}`).classList.add('active');
+
+                    // Audio sound effect could go here
+                    // const hoverSound = new Audio('path_to_beep.mp3');
+                    // hoverSound.play();
+                });
+
+                // Add to list
+                gameModesList.appendChild(li);
+            });
+        }
+
+        // --- Event Listeners ---
+        btnNewGame.addEventListener('click', () => {
+            // Hide Main Screen
+            screenMain.classList.remove('active');
+            mainLogo.style.display = 'none';
+
+            // Show Modes Screen
+            setTimeout(() => {
+                modesTitle.style.display = 'block';
+                screenModes.classList.add('active');
+                
+                // Automatically trigger the first item's hover effect
+                const firstItem = gameModesList.querySelector('.menu-item');
+                if(firstItem) {
+                    firstItem.dispatchEvent(new Event('mouseenter'));
+                }
+            }, 300); // Slight delay for smooth transition
+        });
+
+        // Add a way to go back to the main menu (optional, mapped to Escape key)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && screenModes.classList.contains('active')) {
+                screenModes.classList.remove('active');
+                modesTitle.style.display = 'none';
+                descBox.classList.remove('visible');
+                
+                setTimeout(() => {
+                    mainLogo.style.display = 'block';
+                    screenMain.classList.add('active');
+                    // Reset background to main
+                    document.querySelectorAll('.bg-layer').forEach(bg => bg.classList.remove('active'));
+                    document.getElementById('bgvideo').classList.add('active');
+                }, 300);
+            }
+        });
+
+        // Run initialization
+        initGameModes();
+
+    </script>
+</body>
+</html>
